@@ -1,5 +1,6 @@
 //SPDX-License-Identifier: MIT
 pragma solidity ^0.8.18;
+
 import {Priceconvertor} from "./PriceConvertor.sol";
 import {AggregatorV3Interface} from "@chainlink/contracts/src/v0.8/interfaces/AggregatorV3Interface.sol";
 
@@ -14,6 +15,7 @@ need a pricecovertor so first beofre creating it we need,
 
 contract Fundme {
     using Priceconvertor for uint256;
+
     uint256 public constant MINIMUM_USD = 5e18; //5 USD worth of crytpocoin only.
     address public immutable I_owner; //Deployer is the contract owner.
     address[] private s_funders; // private variables are Gas efficient.
@@ -31,11 +33,7 @@ contract Fundme {
     }
 
     function fundme() public payable {
-        require(
-            MINIMUM_USD <=
-                Priceconvertor.getconvertionrate(msg.value, d_priceFeed),
-            "You need to spend more ETH!"
-        ); //require is used to check if the amount is less than 5 USD
+        require(MINIMUM_USD <= Priceconvertor.getconvertionrate(msg.value, d_priceFeed), "You need to spend more ETH!"); //require is used to check if the amount is less than 5 USD
         /* this above line is simplified version. which explains the MINIMUM_USD (which is in state variable) is = or < to receive funds using
       the Priceconvertor library we are calling the getconvertionrate function to check the amount of ETH sent in USD */
 
@@ -48,22 +46,18 @@ contract Fundme {
 
     function myfundings() public view returns (uint256) {
         require(
-            amountFunded[msg.sender].getconvertionrate(d_priceFeed) >
-                5 * MINIMUM_USD,
-            "You have not funded enough!"
+            amountFunded[msg.sender].getconvertionrate(d_priceFeed) > 5 * MINIMUM_USD, "You have not funded enough!"
         ); //this function can only be called if the user has funded cryto worth more than 25 usd cuz of gas fees
         return amountFunded[msg.sender]; //returns the amount funded by the user
     }
 
     function withdraw() public onlyowner {
-        for (uint i = 0; i < s_funders.length; i++) {
+        for (uint256 i = 0; i < s_funders.length; i++) {
             address fund = s_funders[i];
             amountFunded[fund] = 0; //reset the amount funded by the user to 0
         }
         s_funders = new address[](0); //reset the funders array to empty
-        (bool successful, ) = payable(msg.sender).call{
-            value: address(this).balance
-        }("");
+        (bool successful,) = payable(msg.sender).call{value: address(this).balance}("");
         //transfer the balance of the contract to the owner
         require(successful, "Transfer failed!"); //require is used to check if the transfer was successful
     }
@@ -78,8 +72,8 @@ contract Fundme {
     }
     /*in simple terms here the differnce between two special functions
 
-receive() = “Just ETH? Sure, I’ll take it.” 
+    receive() = “Just ETH? Sure, I’ll take it.” 
 
-fallback() = “You’re calling something weird? Let me handle that — maybe I’ll take your ETH too.
-*/
+    fallback() = “You’re calling something weird? Let me handle that — maybe I’ll take your ETH too.
+    */
 }
